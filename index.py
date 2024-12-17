@@ -325,3 +325,5 @@ if __name__ == "__main__":
     strike_price = 42
     option_type = "call"
     calculate_option_price(ticker, expiry_date_str, strike_price, option_type)
+
+#계산실패
