@@ -256,8 +256,62 @@ def implied_volatility(option_price, S, K, T, r, option_type):
     print("내재 변동성 계산 실패 (최대 반복 횟수 초과).")
     return None
 
+# def calculate_option_price(ticker, expiry_date_str, strike_price, option_type, interest_rate=0.04):
+#     """옵션 가격을 계산합니다."""
+#     underlying_price = get_current_price(ticker)
+#     if underlying_price is None:
+#         print(f"{ticker}의 주가를 가져오는데 실패하여 옵션 가격 계산을 중단합니다.")
+#         return None
+
+#     try:
+#         expiry_date = datetime.datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
+#         today = datetime.date.today()
+#         T = (expiry_date - today).days / 365.25
+#         if T <= 0 : # T가 0보다 작거나 같을 경우 오류 메세지 출력 후 None 반환
+#             print("만기일이 현재 날짜보다 이전입니다.")
+#             return None
+#     except ValueError:
+#         print("날짜 형식이 잘못되었습니다. YYYY-MM-DD 형식으로 입력해주세요.")
+#         return None
+    
+#     try:
+#         yf_ticker = yf.Ticker(ticker)
+#         option_data = yf_ticker.option_chain(expiry_date_str)
+        
+#         if option_type.lower() == 'call':
+#             options = option_data.calls
+#         elif option_type.lower() == 'put':
+#             options = option_data.puts
+#         else:
+#             print("옵션 유형이 잘못되었습니다. 'call' 또는 'put'을 입력해주세요.")
+#             return None
+        
+#         target_option = options[options['strike'] == strike_price]
+#         if target_option.empty:
+#             print(f"해당 행사가격({strike_price})의 옵션이 존재하지 않습니다.")
+#             return None
+        
+#         market_price = target_option['lastPrice'].iloc[0]
+
+#         iv = implied_volatility(market_price, underlying_price, strike_price, T, interest_rate, option_type)
+
+#         if iv is None:
+#             print(f"내재 변동성 계산에 실패했습니다.")
+#             return None
+        
+#         calculated_price = black_scholes(underlying_price, strike_price, T, interest_rate, iv, option_type)
+
+#         print(f"시장 가격: {market_price:.2f} USD")
+#         print(f"계산된 가격: {calculated_price:.2f} USD")
+#         print(f"내재 변동성: {iv:.4f}")
+
+#         return calculated_price
+        
+#     except Exception as e:
+#         print(f"옵션 정보 가져오기 오류: {e}")
+#         return None
+
 def calculate_option_price(ticker, expiry_date_str, strike_price, option_type, interest_rate=0.04):
-    """옵션 가격을 계산합니다."""
     underlying_price = get_current_price(ticker)
     if underlying_price is None:
         print(f"{ticker}의 주가를 가져오는데 실패하여 옵션 가격 계산을 중단합니다.")
@@ -267,7 +321,7 @@ def calculate_option_price(ticker, expiry_date_str, strike_price, option_type, i
         expiry_date = datetime.datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
         today = datetime.date.today()
         T = (expiry_date - today).days / 365.25
-        if T <= 0 : # T가 0보다 작거나 같을 경우 오류 메세지 출력 후 None 반환
+        if T <= 0:
             print("만기일이 현재 날짜보다 이전입니다.")
             return None
     except ValueError:
@@ -291,7 +345,8 @@ def calculate_option_price(ticker, expiry_date_str, strike_price, option_type, i
             print(f"해당 행사가격({strike_price})의 옵션이 존재하지 않습니다.")
             return None
         
-        market_price = target_option['lastPrice'].iloc[0]
+        # Use mid-price between bid and ask for better market price estimate if available
+        market_price = target_option[['bid', 'ask']].mean(axis=1).iloc[0] if target_option['bid'].iloc[0] > 0 else target_option['lastPrice'].iloc[0]
 
         iv = implied_volatility(market_price, underlying_price, strike_price, T, interest_rate, option_type)
 
@@ -311,11 +366,13 @@ def calculate_option_price(ticker, expiry_date_str, strike_price, option_type, i
         print(f"옵션 정보 가져오기 오류: {e}")
         return None
 
+# 그록버전 Update the main execution part accordingly if needed. 그
+
 # 예시 실행
 if __name__ == "__main__":
     ticker = "AAPL"
     expiry_date_str = "2024-12-20"
-    strike_price = 170
+    strike_price = 250
     option_type = "call"
 
     calculate_option_price(ticker, expiry_date_str, strike_price, option_type)
